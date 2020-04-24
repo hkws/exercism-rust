@@ -30,3 +30,22 @@ pub fn reply(message: &str) -> &str {
         _ => "Whatever."
     }
 }
+
+// 模範解答
+// trim()を使うと、前方or後方のwhitespaceが取り除かれるので、
+// yelling(only uppercase)かquestion(ends_with('?'))かを確認すれば事足りる。
+pub fn reply2(message: &str) -> &str {
+    let msg = message.trim();
+    let shouting = msg == msg.to_uppercase();
+    let question = msg.ends_with("?");
+
+    let answer = match msg {
+        ""                        => "Fine. Be that way!",
+        _ if question && shouting => "Calm down, I know what I'm doing!",
+        _ if question             => "Sure.",
+        _ if shouting             => "Whoa, chill out!",
+        _                         => "Whatever.",
+    };
+
+    answer
+}

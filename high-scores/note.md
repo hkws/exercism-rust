@@ -10,7 +10,7 @@
   - personal_top_threeでやっているように、slice.to_vec()で可能。
 
 # Vec -> スライス
-  - &つければOK
+  - &つければOK, derefでスライスになる。厳密には&v[..]
 
 ```
 pub struct HighScores<'a> {
@@ -32,3 +32,27 @@ impl<'a> HighScores<'a> {
         scores.into_iter().rev().take(3).collect::<Vec<u32>>()
     }
 ```
+
+# いろんな変換
+## 文字列 -> 数字
+let guess: u32 = guess.trim().parse().expect(“Not a number”);
+文字列の parse() メソッドは文字列を何かの数値へとパースします。 様々な数値をパース出来るので、Rustに正確にどの型の数値が欲しいのかを伝える必要があります。 なので、 let guess: u32 なのです。
+
+## &str -> String
+str.to_string()
+
+## &str -> char
+str.chars()
+
+## char -> &str
+// https://qiita.com/mHALr/items/26dc38154491d302752b
+// 文字列を格納する領域（Rustのstr1文字は最大4バイト）
+let mut buffer = [0u8; 4];
+let c_ampersand_str: &mut str = c.encode_utf8(&mut buffer);
+
+## charと&str
+‘a’はchar
+“a”は&str
+
+## &*hogeって何？
+&mut hoge -> &hogeにするときは&*hoge？

@@ -1,16 +1,26 @@
 use std::collections::HashMap;
 
 pub fn count(nucleotide: char, dna: &str) -> Result<usize, char> {
-    let counter = nucleotide_counts(dna).unwrap();
+    let counter = nucleotide_counts(dna)?;
     println!("{:?}", counter);
-    counter.get(&nucleotide).cloned().or(Some(0)).ok_or(nucleotide)
+    counter.get(&nucleotide).cloned().ok_or(nucleotide)
 }
 
 pub fn nucleotide_counts(dna: &str) -> Result<HashMap<char, usize>, char> {
     let mut counter = HashMap::new();
+    // HashMapにkeyとして AGCTが存在することを保証する。
+    // nucleotideでないcharのときのみErrをあげたいので。
+    for ch in &['A', 'G', 'C', 'T'] {
+        counter.insert(*ch, 0);
+    }
     for ch in dna.chars() {
-        let count = counter.entry(ch).or_insert(0);
-        *count += 1;
+        match ch {
+            'A' | 'G' | 'C' | 'T' => {
+                let count = counter.entry(ch).or_insert(0);
+                *count += 1;
+            }
+            _ => return Err(ch),
+        }
     }
     Ok(counter)
 }

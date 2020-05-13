@@ -23,4 +23,8 @@ pub fn nucleotide_counts(dna: &str) -> Result<HashMap<char, usize>, char> {
         }
     }
     Ok(counter)
+    // https://exercism.io/tracks/rust/exercises/nucleotide-count/solutions/952625ca6a914d2d822ef211c5354c86
+    // これでいけちゃうらしい
+    // "ACGT".chars().map(|c| (c,count(c,dna))).collect()
+    // collectがつよい
 }

@@ -1,0 +1,63 @@
+#[derive(PartialEq)]
+pub enum TriangleKind {
+    Equilateral,
+    Isosceles,
+    Scalene,
+}
+
+#[derive(PartialEq, PartialOrd)]
+pub struct TriangleSides(u64, u64, u64);
+
+impl TriangleSides {
+    pub fn new(sides: [u64; 3]) -> Option<Self> {
+        if sides.iter().any(|x| x <= &0) {
+            return None;
+        }
+        for i in 0..=2 {
+            let (first, second, third) = (sides[i % 3], sides[(i + 1) % 3], sides[(i + 2) % 3]);
+            if first >= second + third {
+                return None;
+            }
+        }
+        Some(TriangleSides(sides[0], sides[1], sides[2]))
+    }
+}
+
+pub struct Triangle {
+    kind: TriangleKind,
+    sides: TriangleSides,
+}
+
+impl Triangle {
+    pub fn get_triangle_kind(sides: &TriangleSides) -> TriangleKind {
+        let (first, second, third) = (sides.0, sides.1, sides.2);
+        if first == second && second == third {
+            return TriangleKind::Equilateral;
+        }
+        if first == second || second == third || third == first {
+            return TriangleKind::Isosceles;
+        }
+        TriangleKind::Scalene
+    }
+
+    pub fn build(sides: [u64; 3]) -> Option<Triangle> {
+        let tsides = TriangleSides::new(sides)?;
+        let kind = Triangle::get_triangle_kind(&tsides);
+        Some(Self {
+            kind,
+            sides: tsides,
+        })
+    }
+
+    pub fn is_equilateral(&self) -> bool {
+        self.kind == TriangleKind::Equilateral
+    }
+
+    pub fn is_scalene(&self) -> bool {
+        self.kind == TriangleKind::Scalene
+    }
+
+    pub fn is_isosceles(&self) -> bool {
+        self.kind == TriangleKind::Isosceles
+    }
+}

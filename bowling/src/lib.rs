@@ -4,7 +4,7 @@ pub enum Error {
     GameComplete,
 }
 
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum ThrowingCountType {
     First,
     Second,
@@ -55,43 +55,52 @@ impl BowlingGame {
             completed: false
         }
     }
-    pub fn get(&self, frame: usize, throwing_count: ThrowingCountType) -> Option<u16> {
+    pub fn get(&self, frame: usize, throwing_count: &ThrowingCountType) -> Option<u16> {
         if !(1..=10).contains(&frame) {
             return None
         }
         let frame_index = ThrowingCount::convert_to_frame_index(frame);
-        let count_index = ThrowingCount::convert_to_count_index(&throwing_count);
+        let count_index = ThrowingCount::convert_to_count_index(throwing_count);
         Some(self.score[frame_index][count_index])
     }
     pub fn set(&mut self, pins: u16) {
         let frame_index = self.state.get_frame_index();
         let count_index = self.state.get_count_index();
         self.score[frame_index][count_index] = pins;
-        self.go_next();
+        let striked = self.state.frame != 10 && self.state.count == ThrowingCountType::First && pins == 10;
+        self.go_next(striked);
     }
     pub fn frame_sum(&self, frame: usize) -> u16 {
         let frame_idx = ThrowingCount::convert_to_frame_index(frame);
         self.score[frame_idx].iter().sum()
     }
-    pub fn go_next(&mut self) {
+    pub fn go_next(&mut self, striked: bool) {
         // 10フレーム目2投目まででそのrollの和が10ならストライクかスペア -> fill ballを投げる
+        println!("A");
         if self.state.frame == 10 && self.state.count == ThrowingCountType::Second { 
-            if self.frame_sum(self.state.frame) == 10 {
+            if self.frame_sum(self.state.frame) >= 10 {
                 self.state.count = ThrowingCountType::Third;
             } else {
                 self.completed = true;
-                return
             }
+            return
         };
+        println!("B");
         match self.state.count {
             ThrowingCountType::First => {
-                self.state.count = ThrowingCountType::Second
+                if striked { 
+                    self.state.frame += 1;
+                    self.state.count = ThrowingCountType::First;
+                } else {
+                    self.state.count = ThrowingCountType::Second;
+                }
             }
             ThrowingCountType::Second => {
                 self.state.frame += 1;
                 self.state.count = ThrowingCountType::First
             }
             ThrowingCountType::Third => {
+                println!("C");
                 self.completed = true;
                 return
             }
@@ -101,7 +110,19 @@ impl BowlingGame {
         if self.completed {
             return Err(Error::GameComplete)
         }
-        let max = 10 - self.get(self.state.frame, ThrowingCountType::First).unwrap();
+        let max = if self.state.frame != 10 {
+            10 - self.get(self.state.frame, &ThrowingCountType::First).unwrap()
+        } else {
+            match self.state.count {
+                ThrowingCountType::First => 10,
+                ThrowingCountType::Second => 10,
+                ThrowingCountType::Third => if 10 == self.get(self.state.frame, &ThrowingCountType::Second).unwrap() || 10 == self.get(self.state.frame, &ThrowingCountType::First).unwrap() + self.get(self.state.frame, &ThrowingCountType::Second).unwrap() {
+                    10
+                } else {
+                    10 - self.get(self.state.frame, &ThrowingCountType::Second).unwrap()
+                },
+            }
+        };
         if !(0..=max).contains(&pins) {
             return Err(Error::NotEnoughPinsLeft)
         }
@@ -110,26 +131,45 @@ impl BowlingGame {
     }
 
     pub fn score(&self) -> Option<u16> {
+        println!("frame: {}, count: {:?}", self.state.frame, self.state.count);
+        println!("scores: {:?}", self.score);
+        println!("completed: {}", self.completed);
         if !self.completed {
             return None
         }
         let mut score = 0;
         let mut mul = [1; 2];
-        for frame in 1..=10 {
-            // scoreを加算
-            score += self.frame_sum(frame) * mul[0];
-            // mul[0]はもう加算したので次に進める
-            mul[0] = mul[1];
-            mul[1] = 1;
-            // 1投目が10ならstrike -> 2投先まで追加で足す
-            if self.get(frame, ThrowingCountType::First).unwrap() == 10 {
-                mul[0] += 1;
-                mul[1] += 1;
+        let mut frame = 1;
+        while frame <= 10 {
+            for count in [ThrowingCountType::First,
+                          ThrowingCountType::Second,
+                          ThrowingCountType::Third].iter() {
+                if frame != 10 && count == &ThrowingCountType::Third {
+                    continue
+                }
+                // scoreを加算
+                let pins = self.get(frame, count).unwrap();
+                score +=  pins * mul[0];
+
+                // mul[0]はもう加算したので次に進める
+                mul[0] = mul[1];
+                mul[1] = 1;
+                if frame != 10 {
+                    // 1投目が10ならstrike -> 2投先まで追加で足す
+                    if count == &ThrowingCountType::First && pins == 10 {
+                        mul[0] += 1;
+                        mul[1] += 1;
+                        break
+                    }
+                    // 2投目で10になったらspare -> 1投先まで追加で足す
+                    else if count == &ThrowingCountType::Second && self.frame_sum(frame) == 10 { 
+                        mul[0] += 1;
+                    }
+                }
+                // println!("score: {}", score);
+                // println!("mul: {:?}", &mul);
             }
-            // 2投目で10になったらspare -> 1投先まで追加で足す
-            else if self.frame_sum(frame) == 10 { 
-                mul[0] += 1;
-            }
+            frame += 1;
         }
         Some(score)
     }

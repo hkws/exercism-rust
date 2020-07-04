@@ -76,7 +76,6 @@ impl BowlingGame {
     }
     pub fn go_next(&mut self, striked: bool) {
         // 10フレーム目2投目まででそのrollの和が10ならストライクかスペア -> fill ballを投げる
-        println!("A");
         if self.state.frame == 10 && self.state.count == ThrowingCountType::Second { 
             if self.frame_sum(self.state.frame) >= 10 {
                 self.state.count = ThrowingCountType::Third;
@@ -85,7 +84,6 @@ impl BowlingGame {
             }
             return
         };
-        println!("B");
         match self.state.count {
             ThrowingCountType::First => {
                 if striked { 
@@ -100,7 +98,6 @@ impl BowlingGame {
                 self.state.count = ThrowingCountType::First
             }
             ThrowingCountType::Third => {
-                println!("C");
                 self.completed = true;
                 return
             }
@@ -131,9 +128,6 @@ impl BowlingGame {
     }
 
     pub fn score(&self) -> Option<u16> {
-        println!("frame: {}, count: {:?}", self.state.frame, self.state.count);
-        println!("scores: {:?}", self.score);
-        println!("completed: {}", self.completed);
         if !self.completed {
             return None
         }
@@ -166,8 +160,6 @@ impl BowlingGame {
                         mul[0] += 1;
                     }
                 }
-                // println!("score: {}", score);
-                // println!("mul: {:?}", &mul);
             }
             frame += 1;
         }
@@ -176,7 +168,68 @@ impl BowlingGame {
 }
 
 // 二次元配列の定義、初期化
+// こんなイメージ
+// pub struct BowlingGame {
+//     score: [[u16; 3]; 10],
+//     state: ThrowingCount,
+//     completed: bool
+// }
+
+// impl BowlingGame {
+//     pub fn new() -> Self {
+//         Self {
+//             score: [[0; 3]; 10],
+//             state: ThrowingCount::new(),
+//             completed: false
+//         }
+//     }
+// }
+
 // 三項演算子
+// こんな感じで、ifは式として書ける
+// match self.state.count {
+//     ThrowingCountType::First => 10,
+//     ThrowingCountType::Second => 10,
+//     ThrowingCountType::Third => if 10 == self.get(self.state.frame, &ThrowingCountType::Second).unwrap() || 10 == self.get(self.state.frame, &ThrowingCountType::First).unwrap() + self.get(self.state.frame, &ThrowingCountType::Second).unwrap() {
+//         10
+//     } else {
+//         10 - self.get(self.state.frame, &ThrowingCountType::Second).unwrap()
+//     },
+// }
+
 // NoneをErrに変換
   // ok_or
+
 // enumとusizeの変換
+// かゆいところにも手が届く神言語
+// https://doc.rust-lang.org/stable/rust-by-example/custom_types/enum/c_like.html
+// An attribute to hide warnings for unused code.
+// #![allow(dead_code)]
+
+// // enum with implicit discriminator (starts at 0)
+// enum Number {
+//     Zero,
+//     One,
+//     Two,
+// }
+
+// // enum with explicit discriminator
+// enum Color {
+//     Red = 0xff0000,
+//     Green = 0x00ff00,
+//     Blue = 0x0000ff,
+// }
+
+// fn main() {
+//     // `enums` can be cast as integers.
+//     println!("zero is {}", Number::Zero as i32);
+//     println!("one is {}", Number::One as i32);
+
+//     println!("roses are #{:06x}", Color::Red as i32);
+//     println!("violets are #{:06x}", Color::Blue as i32);
+// }
+
+// 全体的にコードが汚い
+// どのコードもサクッときれいに書けているわけではないけど、↓はかなり見通しがよかった。
+// frameの持ち方とscoreの算出方法がよい
+// https://exercism.io/tracks/rust/exercises/bowling/solutions/43d892f26373478db9ea5fc72f82595a

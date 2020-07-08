@@ -42,6 +42,10 @@ pub fn tally(match_results: &str) -> String {
     for line in match_results.lines() {
         let tokens: Vec<&str> = line.split(';').collect();
         let (teama, teamb, result) = (tokens[0], tokens[1], tokens[2]);
+        // 本当はlet (teama, teamb, result) = line.split(',').collect();がしたいが
+        //   let tokens: Vec<&str> = line.split(';').collect();
+        //   let (teama, teamb, result) = (tokens[0], tokens[1], tokens[2]);
+        // しかなさそう
         table.entry(teama).or_insert(TeamScore::new(teama.to_string()));
         table.entry(teamb).or_insert(TeamScore::new(teamb.to_string()));
         match result {
@@ -61,10 +65,17 @@ pub fn tally(match_results: &str) -> String {
         }
     }
     let mut teamscores: Vec<TeamScore> = table.values().cloned().collect::<Vec<TeamScore>>();
+    // cloneせずにsortする方法が知りたい
+    // let mut teamscores: Vec<&TeamScore> = table.values().collect::<Vec<&TeamScore>>();
+    // これで行けた、参照さえ取得すれば十分。たしかに。
     teamscores.sort_by_key(|k| k.name.clone());
     teamscores.reverse();
     teamscores.sort_by_key(|k| k.get_point());
     teamscores.reverse();
+    // 名前でsortした後pointでsortができない。。。
+    // teamscores.sort_by(|a, b| b.get_point().cmp(&a.get_point()).
+    //                             then_with(|| a.name.cmp(&b.name)));
+    // これでいけるみたい。sort_byとthen_with。
     let mut result_table: String = "Team                           | MP |  W |  D |  L |  P".to_string();
     for team in teamscores {
         result_table += "\n";
@@ -72,7 +83,3 @@ pub fn tally(match_results: &str) -> String {
     }
     result_table
 }
-
-// let (teama, teamb, result) = line.split(',').collect();がしたい
-// 名前でsortした後pointでsortができない。。。
-// cloneせずにsortする方法が知りたい

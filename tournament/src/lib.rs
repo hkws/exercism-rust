@@ -80,6 +80,16 @@ pub fn tally(match_results: &str) -> String {
     for team in teamscores {
         result_table += "\n";
         result_table += &team.stringify();
+        // 自前のstringifyはあんまrustっぽくない気がする
+        // rust的に書くなら
+        // impl From<&TeamScore> for String {
+        //     fn from(origin: &TeamScore) -> String {
+        //         format!("{: <31}|  {} |  {} |  {} |  {} |  {}", &self.name, self.get_mp(), self.won, self.drawn, self.lost, self.get_point())
+        //     }
+        // }
+        // このように、型どうしの変換を実装するときは、From<変換元> for 変換先をimplする
+        // 逆変換としてIntoがあり、これはFromを実装したら自動で使えるようになる
+        
     }
     result_table
 }
